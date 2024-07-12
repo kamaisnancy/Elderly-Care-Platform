@@ -1,3 +1,7 @@
+type Error = variant {
+  NotFound : record { msg : text };
+  UnAuthorized : record { msg : text };
+};
 type HealthRecord = record {
   id : nat64;
   status : HealthStatus;
@@ -31,12 +35,17 @@ type MedicationReminderPayload = record {
 };
 type Result = variant { Ok : HealthRecord; Err : text };
 type Result_1 = variant { Ok : MedicationReminder; Err : text };
+type Result_10 = variant { Ok : MedicationReminder; Err : Error };
+type Result_11 = variant { Ok : User; Err : Error };
+type Result_12 = variant { Ok : VirtualConsultation; Err : Error };
 type Result_2 = variant { Ok : User; Err : text };
 type Result_3 = variant { Ok : VirtualConsultation; Err : text };
-type Result_4 = variant { Ok : vec HealthRecord; Err : text };
-type Result_5 = variant { Ok : vec MedicationReminder; Err : text };
-type Result_6 = variant { Ok : vec User; Err : text };
-type Result_7 = variant { Ok : vec VirtualConsultation; Err : text };
+type Result_4 = variant { Ok; Err : text };
+type Result_5 = variant { Ok : vec HealthRecord; Err : text };
+type Result_6 = variant { Ok : vec MedicationReminder; Err : text };
+type Result_7 = variant { Ok : vec User; Err : text };
+type Result_8 = variant { Ok : vec VirtualConsultation; Err : text };
+type Result_9 = variant { Ok : HealthRecord; Err : Error };
 type User = record {
   id : nat64;
   user_type : UserType;
@@ -65,8 +74,22 @@ service : {
   create_medication_reminder : (MedicationReminderPayload) -> (Result_1);
   create_user : (UserPayload) -> (Result_2);
   create_virtual_consultation : (VirtualConsultationPayload) -> (Result_3);
-  get_all_health_records : () -> (Result_4) query;
-  get_all_medication_reminders : () -> (Result_5) query;
-  get_all_users : () -> (Result_6) query;
-  get_all_virtual_consultations : () -> (Result_7) query;
+  delete_health_record : (nat64) -> (Result_4);
+  delete_medication_reminder : (nat64) -> (Result_4);
+  delete_user : (nat64) -> (Result_4);
+  delete_virtual_consultation : (nat64) -> (Result_4);
+  get_all_health_records : () -> (Result_5) query;
+  get_all_medication_reminders : () -> (Result_6) query;
+  get_all_users : () -> (Result_7) query;
+  get_all_virtual_consultations : () -> (Result_8) query;
+  get_health_record_by_id : (nat64) -> (Result_9) query;
+  get_medication_reminder_by_id : (nat64) -> (Result_10) query;
+  get_user_by_id : (nat64) -> (Result_11) query;
+  get_virtual_consultation_by_id : (nat64) -> (Result_12) query;
+  update_health_record : (nat64, HealthRecordPayload) -> (Result);
+  update_medication_reminder : (nat64, MedicationReminderPayload) -> (Result_1);
+  update_user : (nat64, UserPayload) -> (Result_2);
+  update_virtual_consultation : (nat64, VirtualConsultationPayload) -> (
+      Result_3,
+    );
 }
