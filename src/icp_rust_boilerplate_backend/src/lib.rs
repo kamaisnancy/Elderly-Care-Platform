@@ -201,6 +201,18 @@ struct VirtualConsultationPayload {
     status: String,
 }
 
+// Helper function to increment ID
+fn increment_id() -> u64 {
+    ID_COUNTER.with(|counter| {
+        let current_value = *counter.borrow().get();
+        counter
+            .borrow_mut()
+            .set(current_value + 1)
+            .expect("Failed to increment ID counter");
+        current_value + 1
+    })
+}
+
 // Function to create a new user
 #[ic_cdk::update]
 fn create_user(payload: UserPayload) -> Result<User, String> {
@@ -209,12 +221,7 @@ fn create_user(payload: UserPayload) -> Result<User, String> {
         return Err("Name and contact cannot be empty".to_string());
     }
 
-    let id = ID_COUNTER
-        .with(|counter| {
-            let current_value = *counter.borrow().get();
-            counter.borrow_mut().set(current_value + 1)
-        })
-        .expect("Cannot increment ID counter");
+    let id = increment_id();
 
     let user = User {
         id,
@@ -226,6 +233,46 @@ fn create_user(payload: UserPayload) -> Result<User, String> {
 
     USERS_STORAGE.with(|storage| storage.borrow_mut().insert(id, user.clone()));
     Ok(user)
+}
+
+// Function to retrieve a user by ID
+#[ic_cdk::query]
+fn get_user_by_id(user_id: u64) -> Result<User, Error> {
+    USERS_STORAGE.with(|storage| match storage.borrow().get(&user_id) {
+        Some(user) => Ok(user.clone()),
+        None => Err(Error::NotFound {
+            msg: "User not found.".to_string(),
+        }),
+    })
+}
+
+// Function to update a user
+#[ic_cdk::update]
+fn update_user(user_id: u64, payload: UserPayload) -> Result<User, String> {
+    USERS_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        if let Some(mut user) = storage.remove(&user_id) {
+            user.name = payload.name;
+            user.contact = payload.contact;
+            user.user_type = payload.user_type;
+            storage.insert(user_id, user.clone());
+            Ok(user)
+        } else {
+            Err("User not found".to_string())
+        }
+    })
+}
+
+// Function to delete a user
+#[ic_cdk::update]
+fn delete_user(user_id: u64) -> Result<(), String> {
+    USERS_STORAGE.with(|storage| {
+        if storage.borrow_mut().remove(&user_id).is_some() {
+            Ok(())
+        } else {
+            Err("User not found".to_string())
+        }
+    })
 }
 
 // Function to retrieve all users
@@ -259,12 +306,7 @@ fn create_health_record(payload: HealthRecordPayload) -> Result<HealthRecord, St
         return Err("User ID does not exist.".to_string());
     }
 
-    let id = ID_COUNTER
-        .with(|counter| {
-            let current_value = *counter.borrow().get();
-            counter.borrow_mut().set(current_value + 1)
-        })
-        .expect("Cannot increment ID counter");
+    let id = increment_id();
 
     let health_record = HealthRecord {
         id,
@@ -278,6 +320,47 @@ fn create_health_record(payload: HealthRecordPayload) -> Result<HealthRecord, St
 
     HEALTH_RECORDS_STORAGE.with(|storage| storage.borrow_mut().insert(id, health_record.clone()));
     Ok(health_record)
+}
+
+// Function to retrieve a health record by ID
+#[ic_cdk::query]
+fn get_health_record_by_id(record_id: u64) -> Result<HealthRecord, Error> {
+    HEALTH_RECORDS_STORAGE.with(|storage| match storage.borrow().get(&record_id) {
+        Some(record) => Ok(record.clone()),
+        None => Err(Error::NotFound {
+            msg: "Health record not found.".to_string(),
+        }),
+    })
+}
+
+// Function to update a health record
+#[ic_cdk::update]
+fn update_health_record(record_id: u64, payload: HealthRecordPayload) -> Result<HealthRecord, String> {
+    HEALTH_RECORDS_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        if let Some(mut record) = storage.remove(&record_id) {
+            record.heart_rate = payload.heart_rate;
+            record.blood_pressure = payload.blood_pressure;
+            record.activity_level = payload.activity_level;
+            record.status = payload.status;
+            storage.insert(record_id, record.clone());
+            Ok(record)
+        } else {
+            Err("Health record not found".to_string())
+        }
+    })
+}
+
+// Function to delete a health record
+#[ic_cdk::update]
+fn delete_health_record(record_id: u64) -> Result<(), String> {
+    HEALTH_RECORDS_STORAGE.with(|storage| {
+        if storage.borrow_mut().remove(&record_id).is_some() {
+            Ok(())
+        } else {
+            Err("Health record not found".to_string())
+        }
+    })
 }
 
 // Function to retrieve all health records
@@ -316,12 +399,7 @@ fn create_medication_reminder(
         return Err("User ID does not exist.".to_string());
     }
 
-    let id = ID_COUNTER
-        .with(|counter| {
-            let current_value = *counter.borrow().get();
-            counter.borrow_mut().set(current_value + 1)
-        })
-        .expect("Cannot increment ID counter");
+    let id = increment_id();
 
     let medication_reminder = MedicationReminder {
         id,
@@ -335,6 +413,46 @@ fn create_medication_reminder(
     MEDICATION_REMINDERS_STORAGE
         .with(|storage| storage.borrow_mut().insert(id, medication_reminder.clone()));
     Ok(medication_reminder)
+}
+
+// Function to retrieve a medication reminder by ID
+#[ic_cdk::query]
+fn get_medication_reminder_by_id(reminder_id: u64) -> Result<MedicationReminder, Error> {
+    MEDICATION_REMINDERS_STORAGE.with(|storage| match storage.borrow().get(&reminder_id) {
+        Some(reminder) => Ok(reminder.clone()),
+        None => Err(Error::NotFound {
+            msg: "Medication reminder not found.".to_string(),
+        }),
+    })
+}
+
+// Function to update a medication reminder
+#[ic_cdk::update]
+fn update_medication_reminder(reminder_id: u64, payload: MedicationReminderPayload) -> Result<MedicationReminder, String> {
+    MEDICATION_REMINDERS_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        if let Some(mut reminder) = storage.remove(&reminder_id) {
+            reminder.medication_name = payload.medication_name;
+            reminder.dosage = payload.dosage;
+            reminder.schedule = payload.schedule;
+            storage.insert(reminder_id, reminder.clone());
+            Ok(reminder)
+        } else {
+            Err("Medication reminder not found".to_string())
+        }
+    })
+}
+
+// Function to delete a medication reminder
+#[ic_cdk::update]
+fn delete_medication_reminder(reminder_id: u64) -> Result<(), String> {
+    MEDICATION_REMINDERS_STORAGE.with(|storage| {
+        if storage.borrow_mut().remove(&reminder_id).is_some() {
+            Ok(())
+        } else {
+            Err("Medication reminder not found".to_string())
+        }
+    })
 }
 
 // Function to retrieve all medication reminders
@@ -376,12 +494,7 @@ fn create_virtual_consultation(
         return Err("Provider ID does not exist.".to_string());
     }
 
-    let id = ID_COUNTER
-        .with(|counter| {
-            let current_value = *counter.borrow().get();
-            counter.borrow_mut().set(current_value + 1)
-        })
-        .expect("Cannot increment ID counter");
+    let id = increment_id();
 
     let virtual_consultation = VirtualConsultation {
         id,
@@ -398,6 +511,47 @@ fn create_virtual_consultation(
             .insert(id, virtual_consultation.clone())
     });
     Ok(virtual_consultation)
+}
+
+// Function to retrieve a virtual consultation by ID
+#[ic_cdk::query]
+fn get_virtual_consultation_by_id(consultation_id: u64) -> Result<VirtualConsultation, Error> {
+    VIRTUAL_CONSULTATIONS_STORAGE.with(|storage| match storage.borrow().get(&consultation_id) {
+        Some(consultation) => Ok(consultation.clone()),
+        None => Err(Error::NotFound {
+            msg: "Virtual consultation not found.".to_string(),
+        }),
+    })
+}
+
+// Function to update a virtual consultation
+#[ic_cdk::update]
+fn update_virtual_consultation(consultation_id: u64, payload: VirtualConsultationPayload) -> Result<VirtualConsultation, String> {
+    VIRTUAL_CONSULTATIONS_STORAGE.with(|storage| {
+        let mut storage = storage.borrow_mut();
+        if let Some(mut consultation) = storage.remove(&consultation_id) {
+            consultation.user_id = payload.user_id;
+            consultation.provider_id = payload.provider_id;
+            consultation.scheduled_at = payload.scheduled_at;
+            consultation.status = payload.status;
+            storage.insert(consultation_id, consultation.clone());
+            Ok(consultation)
+        } else {
+            Err("Virtual consultation not found".to_string())
+        }
+    })
+}
+
+// Function to delete a virtual consultation
+#[ic_cdk::update]
+fn delete_virtual_consultation(consultation_id: u64) -> Result<(), String> {
+    VIRTUAL_CONSULTATIONS_STORAGE.with(|storage| {
+        if storage.borrow_mut().remove(&consultation_id).is_some() {
+            Ok(())
+        } else {
+            Err("Virtual consultation not found".to_string())
+        }
+    })
 }
 
 // Function to retrieve all virtual consultations
